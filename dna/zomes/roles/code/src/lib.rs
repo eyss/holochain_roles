@@ -9,7 +9,7 @@ extern crate serde_json;
 
 use serde_derive::{Deserialize, Serialize};
 
-use hdk::{entry_definition::ValidatingEntryType, error::{ZomeApiResult, ZomeApiError}};
+use hdk::{AGENT_ADDRESS, entry_definition::ValidatingEntryType, error::{ZomeApiResult, ZomeApiError}};
 
 use hdk::holochain_persistence_api::cas::content::Address;
 
@@ -71,7 +71,7 @@ pub mod roles_zome {
             Some(role_entry) => {
                 hdk::commit_entry(&role_entry)?;
 
-                let assignment = Assignment::from(&role_address, &agent_address);
+                let assignment = Assignment::from(&role_address, &agent_address, &AGENT_ADDRESS);
                 let assignment_address = hdk::commit_entry(&assignment.entry())?;
 
                 hdk::link_entries(&role_address, &assignment_address, ROLE_ASSIGNMENT_LINK_TYPE, "")?;

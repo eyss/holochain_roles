@@ -1,5 +1,7 @@
-use hdk::{holochain_persistence_api::cas::content::Address, prelude::*, AGENT_ADDRESS};
-
+use hdk::{
+    holochain_persistence_api::cas::content::Address,
+    holochain_wasm_utils::api_serialization::QueryArgsNames, prelude::*, AGENT_ADDRESS,
+};
 use serde_derive::{Deserialize, Serialize};
 
 use crate::role::Role;
@@ -10,14 +12,20 @@ use crate::{ADMINISTRATOR_ROLE, AGENT_ASSIGNMENT_LINK_TYPE, ASSIGNMENT_TYPE, ROL
 pub struct Assignment {
     pub role_address: Address,
     pub agent_address: Address,
+    pub admin_address: Address,
     pub metadata: Option<JsonString>,
 }
 
 impl Assignment {
-    pub fn from(role_address: &Address, agent_address: &Address) -> Assignment {
+    pub fn from(
+        role_address: &Address,
+        agent_address: &Address,
+        admin_address: &Address,
+    ) -> Assignment {
         Assignment {
             role_address: role_address.clone(),
             agent_address: agent_address.clone(),
+            admin_address: admin_address.clone(),
             metadata: None,
         }
     }
@@ -38,11 +46,14 @@ pub fn assignment_entry_definition() -> ValidatingEntryType {
         description: "Anchors are used as the base for links so linked entries can be found with a text search.",
         sharing: Sharing::Public,
         validation_package: || {
-            hdk::ValidationPackageDefinition::ChainFull
+            hdk::ValidationPackageDefinition::ChainEntries
         },
         validation: | _validation_data: hdk::EntryValidationData<Assignment>| {
             match _validation_data {
                 hdk::EntryValidationData::Create { validation_data, entry } => {
+                    if !validation_data.sources().contains(&entry.admin_address) {
+                        return Err(String::from("Assignment must be signed by its issuing admin"));
+                    }
                     let role = Role::from(String::from(ADMINISTRATOR_ROLE));
 
                     if entry.role_address == role.address()? {
@@ -58,13 +69,10 @@ pub fn assignment_entry_definition() -> ValidatingEntryType {
                         return Err(String::from("The role entry should always accompany the assignment entry"));
                     }
 
-                    let chain_headers = validation_data.clone().package.source_chain_headers.unwrap();
-                    let agents_addresses = validation_data.sources();
-
-                    let admin = validation::is_some_agent_admin(&agents_addresses, &chain_entries, &chain_headers)?;
+                    let admin = validation::is_agent_admin(&entry.admin_address, &chain_entries)?;
 
                     match admin {
-                        Some(_) => Ok(()),
+                        true => Ok(()),
                         _ => Err(String::from("Only admins can create roles"))
                     }
                 },
@@ -86,7 +94,25 @@ pub fn assignment_entry_definition() -> ValidatingEntryType {
     )
 }
 
-pub fn receive_own_assignment(name: String, metadata: Option<JsonString>) -> ZomeApiResult<()> {
+pub fn commit_own_assignments() -> ZomeApiResult<()> {
+    let assignments: Vec<Assignment> = hdk::utils::get_links_and_load_type(
+        &AGENT_ADDRESS,
+        LinkMatch::Exactly(AGENT_ASSIGNMENT_LINK_TYPE),
+        LinkMatch::Any,
+    )?;
+
+    let local_assignments = hdk::query(QueryArgsNames::from(ASSIGNMENT_TYPE), 0, 0)?;
+
+    for assignment in assignments {
+        let address = assignment.address()?;
+        if !local_assignments.contains(&address) {
+            commit_admin_assignments(&assignment.admin_address)?;
+            hdk::commit_entry(&assignment.entry())?;
+        }
+    }
+
+    Ok(())
+    /*
     let role = Role::from(name);
 
     let role_address = role.address()?;
@@ -112,6 +138,38 @@ pub fn receive_own_assignment(name: String, metadata: Option<JsonString>) -> Zom
         }
         _ => Err(ZomeApiError::from(String::from(
             "Cannot received an assignment that has not been created yet",
+        ))),
+    } */
+}
+
+pub fn commit_admin_assignments(admin_address: &Address) -> ZomeApiResult<()> {
+    if validation::is_agent_initial_admin(&admin_address)? {
+        return Ok(());
+    }
+
+    let admin = Role::admin_role();
+    let role_address = admin.address()?;
+
+    let assignments: Vec<Assignment> = hdk::utils::get_links_and_load_type(
+        &admin_address,
+        LinkMatch::Exactly(AGENT_ASSIGNMENT_LINK_TYPE),
+        LinkMatch::Any,
+    )?;
+
+    let maybe_admin_assignment = assignments.iter().find(|assignment| {
+        assignment.agent_address == admin_address.clone() && assignment.role_address == role_address
+    });
+
+    match maybe_admin_assignment {
+        Some(admin_assignment) => {
+            commit_admin_assignments(&admin_assignment.admin_address)?;
+            hdk::commit_entry(&admin_assignment.entry())?;
+
+            Ok(())
+        }
+        _ => Err(ZomeApiError::from(format!(
+            "Agent with address {} is not an administrator",
+            admin_address
         ))),
     }
 }

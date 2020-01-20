@@ -18,6 +18,12 @@ impl Role {
         Role { name }
     }
 
+    pub fn admin_role() -> Role {
+        Role {
+            name: String::from(ADMINISTRATOR_ROLE),
+        }
+    }
+
     pub fn entry(&self) -> Entry {
         Entry::App(ROLE_TYPE.into(), self.into())
     }
@@ -34,7 +40,7 @@ pub fn role_entry_definition() -> ValidatingEntryType {
         description: "Role entry that des",
         sharing: Sharing::Public,
         validation_package: || {
-            hdk::ValidationPackageDefinition::ChainFull
+            hdk::ValidationPackageDefinition::ChainEntries
         },
         validation: | _validation_data: hdk::EntryValidationData<Role>| {
             match _validation_data {
@@ -45,10 +51,9 @@ pub fn role_entry_definition() -> ValidatingEntryType {
 
                     let chain_entries = validation_data.clone().package.source_chain_entries.unwrap();
 
-                    let chain_headers = validation_data.clone().package.source_chain_headers.unwrap();
                     let agents_addresses = validation_data.sources();
 
-                    let admin = validation::is_some_agent_admin(&agents_addresses, &chain_entries, &chain_headers)?;
+                    let admin = validation::is_some_agent_admin(&agents_addresses, &chain_entries)?;
 
                     match admin {
                         Some(_) => Ok(()),
