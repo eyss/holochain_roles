@@ -2,10 +2,9 @@ use hdk::{holochain_persistence_api::cas::content::Address, prelude::*, AGENT_AD
 
 use serde_derive::{Deserialize, Serialize};
 
-use crate::admins;
 use crate::role::Role;
-use crate::utils;
-use crate::{AGENT_ASSIGNMENT_LINK_TYPE, ASSIGNMENT_TYPE, ROLE_TYPE};
+use crate::{utils, validation};
+use crate::{ADMINISTRATOR_ROLE, AGENT_ASSIGNMENT_LINK_TYPE, ASSIGNMENT_TYPE, ROLE_TYPE};
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Assignment {
@@ -44,39 +43,32 @@ pub fn assignment_entry_definition() -> ValidatingEntryType {
         validation: | _validation_data: hdk::EntryValidationData<Assignment>| {
             match _validation_data {
                 hdk::EntryValidationData::Create { validation_data, entry } => {
-                    let chain_entries = validation_data.package.source_chain_entries.unwrap();
+                    let role = Role::from(String::from(ADMINISTRATOR_ROLE));
+
+                    if entry.role_address == role.address()? {
+                        if let Some(_) = entry.metadata {
+                            return Err(String::from("Cannot put metadata in an administrator assignment"));
+                        }
+                    }
+
+                    let chain_entries = validation_data.clone().package.source_chain_entries.unwrap();
 
                     let role: Option<Role> = utils::find_entry_with_address(&chain_entries, ROLE_TYPE, entry.role_address)?;
                     if let None = role {
                         return Err(String::from("The role entry should always accompany the assignment entry"));
                     }
-                    let admin = admins::is_agent_admin(&chain_entries)?;
+
+                    let chain_headers = validation_data.clone().package.source_chain_headers.unwrap();
+                    let agents_addresses = validation_data.sources();
+
+                    let admin = validation::is_some_agent_admin(&agents_addresses, &chain_entries, &chain_headers)?;
 
                     match admin {
-                        true => Ok(()),
-                        false => Err(String::from("Only admins can create roles"))
+                        Some(_) => Ok(()),
+                        _ => Err(String::from("Only admins can create roles"))
                     }
                 },
-                hdk::EntryValidationData::Modify {old_entry, new_entry, validation_data, .. } => {
-                    if old_entry.role_address != new_entry.role_address || old_entry.agent_address != new_entry.agent_address || old_entry.metadata != new_entry.metadata {
-                        return Err(ZomeApiError::from(String::from("Cannot modify the contents of the entry")))?;
-                    }
-
-                    let chain_entries = validation_data.package.source_chain_entries.unwrap();
-
-                    let role: Option<Role> = utils::find_entry_with_address(&chain_entries, ROLE_TYPE, new_entry.role_address)?;
-                    if let None = role {
-                        return Err(String::from("The role entry should always accompany the assignment entry"));
-                    }
-
-                    let agent_address = utils::get_chain_agent_id(&chain_entries)?;
-                    if new_entry.agent_address != agent_address {
-                        return Err(ZomeApiError::from(String::from("Can only receive a role assignment by the assignment agent address")))?;
-                    }
-
-                    Ok(())
-                },
-                _ => Err(String::from("Cannot modify or delete roles"))
+                _ => Err(String::from("Cannot modify or delete role assignments"))
             }
         },
         links: [
@@ -112,9 +104,9 @@ pub fn receive_own_assignment(name: String, metadata: Option<JsonString>) -> Zom
 
     match (maybe_role_entry, maybe_assignment_entry) {
         (Some(role_entry), Some(assignment_entry)) => {
-            hdk::update_entry(role_entry, &role_address)?;
+            hdk::commit_entry(&role_entry)?;
 
-            hdk::update_entry(assignment_entry, &assignment_address)?;
+            hdk::commit_entry(&assignment_entry)?;
 
             Ok(())
         }

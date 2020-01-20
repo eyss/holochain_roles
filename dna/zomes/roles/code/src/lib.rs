@@ -1,3 +1,4 @@
+#![feature(vec_remove_item)]
 #![feature(proc_macro_hygiene)]
 extern crate hdk;
 extern crate hdk_proc_macros;
@@ -23,7 +24,6 @@ pub const ROLE_ASSIGNMENT_LINK_TYPE: &str = "role->role_assignment";
 pub const AGENT_ASSIGNMENT_LINK_TYPE: &str = "agent->role_assignment";
 pub const ADMINISTRATOR_ROLE: &str = "administrator";
 
-pub mod admins;
 pub mod assignment;
 pub mod role;
 pub mod utils;
@@ -75,6 +75,7 @@ pub mod roles_zome {
                 let assignment_address = hdk::commit_entry(&assignment.entry())?;
 
                 hdk::link_entries(&role_address, &assignment_address, ROLE_ASSIGNMENT_LINK_TYPE, "")?;
+                hdk::link_entries(&agent_address, &assignment_address, AGENT_ASSIGNMENT_LINK_TYPE, "")?;
 
                 Ok(assignment_address)
             }

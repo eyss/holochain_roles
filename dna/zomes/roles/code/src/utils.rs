@@ -53,18 +53,3 @@ where
 
     Ok(None)
 }
-
-/**
- * Go through all the agent's chain and find its AgentId entry, and return its agent_address
- */
-pub fn get_chain_agent_id(chain_entries: &Vec<Entry>) -> ZomeApiResult<Address> {
-    for entry in chain_entries.iter() {
-        if let Entry::AgentId(agent_id) = entry {
-            return Ok(agent_id.pub_sign_key.clone().into());
-        }
-    }
-
-    return Err(ZomeApiError::from(String::from(
-        "AgentId entry not found in source chain",
-    )));
-}
