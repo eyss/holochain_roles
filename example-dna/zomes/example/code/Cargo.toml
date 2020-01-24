@@ -1,8 +1,7 @@
 [package]
-name = "roles"
+name = "example"
 version = "0.1.0"
-authors = ["guillemcordoba <guillem.cordoba@gmail.com>"]
-repository = "https://github.com/guillemcordoba/hc_zome_roles"
+authors = ["hc-scaffold-framework"]
 edition = "2018"
 
 [dependencies]
@@ -13,6 +12,7 @@ hdk = "=0.0.42-alpha5"
 hdk_proc_macros = "=0.0.42-alpha5"
 holochain_wasm_utils = "=0.0.42-alpha5"
 holochain_json_derive = "=0.0.17"
+holochain_anchors = "=0.2"
 
 [lib]
 path = "src/lib.rs"

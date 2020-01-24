@@ -15,32 +15,32 @@
     },
     {
       "command": "CARGO_TARGET_DIR=${CARGO_TARGET_DIR:-/tmp/my_first_app/target} && wasm-gc",
-      "arguments": ["$CARGO_TARGET_DIR/wasm32-unknown-unknown/release/roles.wasm"]
+      "arguments": ["$CARGO_TARGET_DIR/wasm32-unknown-unknown/release/example.wasm"]
     },
     {
       "command": "CARGO_TARGET_DIR=${CARGO_TARGET_DIR:-/tmp/my_first_app/target} && wasm-opt",
       "arguments": [
         "-Oz",
         "--vacuum",
-        "$CARGO_TARGET_DIR/wasm32-unknown-unknown/release/roles.wasm"
+        "$CARGO_TARGET_DIR/wasm32-unknown-unknown/release/example.wasm"
       ]
     },
     {
       "command": "CARGO_TARGET_DIR=${CARGO_TARGET_DIR:-/tmp/my_first_app/target} && wasm2wat",
       "arguments": [
-        "$CARGO_TARGET_DIR/wasm32-unknown-unknown/release/roles.wasm",
+        "$CARGO_TARGET_DIR/wasm32-unknown-unknown/release/example.wasm",
         "-o",
-        "$CARGO_TARGET_DIR/wasm32-unknown-unknown/release/roles.wat"
+        "$CARGO_TARGET_DIR/wasm32-unknown-unknown/release/example.wat"
       ]
     },
     {
       "command": "CARGO_TARGET_DIR=${CARGO_TARGET_DIR:-/tmp/my_first_app/target} && wat2wasm",
       "arguments": [
-        "$CARGO_TARGET_DIR/wasm32-unknown-unknown/release/roles.wat",
+        "$CARGO_TARGET_DIR/wasm32-unknown-unknown/release/example.wat",
         "-o",
-        "$CARGO_TARGET_DIR/wasm32-unknown-unknown/release/roles.wasm"
+        "$CARGO_TARGET_DIR/wasm32-unknown-unknown/release/example.wasm"
       ]
     }
   ],
-  "artifact": "${CARGO_TARGET_DIR:-/tmp/my_first_app/target}/wasm32-unknown-unknown/release/roles.wasm"
+  "artifact": "${CARGO_TARGET_DIR:-/tmp/my_first_app/target}/wasm32-unknown-unknown/release/example.wasm"
 }
