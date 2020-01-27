@@ -14,7 +14,7 @@ Add the following to your zomes cargo toml.
 
 ```
 holochain_anchors = "0.2.1"
-hc_roles_mixin = "0.1.0"
+hc_roles_mixin = "0.1.1"
 ```
 
 ## Usage
