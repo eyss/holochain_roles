@@ -1,0 +1,84 @@
+
+[[agents]]
+id = 'alice'
+keystore_file = './alice.keystore'
+name = 'alice'
+public_address = 'HcScJWFagz6JtswwimIuXHa5V8h8Sjoy9Bkrbzfervjhuvq8g9whUEawSk845iz'
+
+[[agents]]
+id = 'bob'
+keystore_file = './bob.keystore'
+name = 'bob'
+public_address = 'HcSCJR7dD9t6Nuqc9kxqWfKzbo443p8y8Z38IA9dukBEr96umt3b47uetMXg3aa'
+
+[[agents]]
+id = 'carol'
+keystore_file = './carol.keystore'
+name = 'carol'
+public_address = 'HcSCIp94gUSFR3p3urhjCwXZsjqmrauxpGy43XhEeH344uwoqiMWanHdmme3tkz'
+
+[[dnas]]
+file = './dist/example-dna.dna.json'
+hash = 'QmWJRVnvjfUaP6TU8BvyXZebmtJjEqVTCWDFbsidAjPMaH'
+id = 'hc-roles'
+
+[[instances]]
+agent = 'alice'
+dna = 'hc-roles'
+id = 'alice-instance'
+
+[instances.storage]
+type = 'memory'
+
+[[instances]]
+agent = 'bob'
+dna = 'hc-roles'
+id = 'bob-instance'
+
+[instances.storage]
+type = 'memory'
+
+[[instances]]
+agent = 'carol'
+dna = 'hc-roles'
+id = 'carol-instance'
+
+[instances.storage]
+type = 'memory'
+
+[[interfaces]]
+admin = true
+id = 'alice-interface'
+
+[[interfaces.instances]]
+id = 'alice-instance'
+
+[interfaces.driver]
+port = 8888
+type = 'http'
+
+[[interfaces]]
+admin = true
+id = 'bob-interface'
+
+[[interfaces.instances]]
+id = 'bob-instance'
+
+[interfaces.driver]
+port = 8889
+type = 'http'
+
+[[interfaces]]
+admin = true
+id = 'carol-interface'
+
+[[interfaces.instances]]
+id = 'carol-instance'
+
+[interfaces.driver]
+port = 8890
+type = 'http'
+
+[network]
+type = "sim2h"
+sim2h_url = 'ws://localhost:9000'

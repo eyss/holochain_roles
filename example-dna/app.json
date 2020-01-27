@@ -10,5 +10,7 @@
   ],
   "version": "0.1.0",
   "dht": {},
-  "properties": null
+  "properties": {
+    "progenitor": "HcScJWFagz6JtswwimIuXHa5V8h8Sjoy9Bkrbzfervjhuvq8g9whUEawSk845iz"
+  }
 }

@@ -28,6 +28,8 @@ mod my_zome {
 
     #[validate_agent]
     pub fn validate_agent(validation_data: EntryValidationData<AgentId>) {
+        roles::handlers::create_admin_role()?;
+
         Ok(())
     }
 
@@ -36,33 +38,39 @@ mod my_zome {
         roles::role_entry_def()
     }
 
+    #[entry_def]
+    fn anchors_entry_def() -> ValidatingEntryType {
+        holochain_anchors::anchor_definition()
+    }
+
     #[zome_fn("hc_public")]
     fn create_role(role_name: String) -> ZomeApiResult<Address> {
-        roles::create_role(&role_name)
+
+        roles::handlers::create_role(&role_name)
     }
 
     #[zome_fn("hc_public")]
     fn assign_role(role_name: String, agent_address: Address) -> ZomeApiResult<()> {
-        roles::assign_role(&role_name, &agent_address)
+        roles::handlers::assign_role(&role_name, &agent_address)
     }
 
     #[zome_fn("hc_public")]
     fn unassign_role(role_name: String, agent_address: Address) -> ZomeApiResult<()> {
-        roles::unassign_role(&role_name, &agent_address)
+        roles::handlers::unassign_role(&role_name, &agent_address)
     }
 
     #[zome_fn("hc_public")]
     fn get_role(role_name: String) -> ZomeApiResult<Role> {
-        roles::get_role(&role_name)
+        roles::handlers::get_role(&role_name)
     }
 
     #[zome_fn("hc_public")]
     fn get_all_roles() -> ZomeApiResult<Vec<Role>> {
-        roles::get_all_roles()
+        roles::handlers::get_all_roles()
     }
 
     #[zome_fn("hc_public")]
     fn get_agent_roles() -> ZomeApiResult<Vec<Role>> {
-        roles::get_all_roles()
+        roles::handlers::get_all_roles()
     }
 }
