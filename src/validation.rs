@@ -1,4 +1,5 @@
-use crate::roles::*;
+use hdk::prelude::*;
+use crate::*;
 
 pub fn has_agent_role(agent_address: &Address, role_name: &String) -> ZomeApiResult<bool> {
     let role = Role::from(role_name.clone(), vec![]);

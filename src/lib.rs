@@ -1,5 +1,8 @@
+#![feature(vec_remove_item)]
+
 use hdk::prelude::*;
 use holochain_anchors;
+use serde_derive::{Deserialize, Serialize};
 
 pub mod progenitor;
 pub mod validation;

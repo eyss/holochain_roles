@@ -1,6 +1,6 @@
 use hdk::prelude::*;
 
-use crate::roles::{Role, ADMIN_ROLE_NAME, AGENT_TO_ROLE_LINK_TYPE, ANCHOR_TO_ROLE_LINK_TYPE};
+use crate::{Role, ADMIN_ROLE_NAME, AGENT_TO_ROLE_LINK_TYPE, ANCHOR_TO_ROLE_LINK_TYPE};
 
 pub fn create_admin_role() -> ZomeApiResult<()> {
     let admin_role = Role::from(String::from(ADMIN_ROLE_NAME), vec![]);
