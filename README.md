@@ -10,6 +10,10 @@ This mixin is built to target `hc v0.0.42-alpha3`. It also depends on the [holoc
 
 Here is the design for this mixin: https://hackmd.io/6xfwfSVYSGeZe3vQ_-1cWw?view.
 
+## Documentation
+
+Here you can find the documentation for this mixin: https://docs.rs/hc_roles_mixin.
+
 ## Installation
 
 Add the following to your zomes cargo toml.
