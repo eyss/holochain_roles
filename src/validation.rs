@@ -1,6 +1,9 @@
 use hdk::prelude::*;
 use crate::*;
 
+/**
+ * Returns whether the given agent has been assigned to the given role
+ */
 pub fn has_agent_role(agent_address: &Address, role_name: &String) -> ZomeApiResult<bool> {
     let role = Role::from(role_name.clone(), vec![]);
 
@@ -11,6 +14,10 @@ pub fn has_agent_role(agent_address: &Address, role_name: &String) -> ZomeApiRes
     Ok(current_role.members.contains(&agent_address))
 }
 
+/**
+ * Returns whether the given agent is an administrator and, as such,
+ * can create, assign  and unassign roles
+ */
 pub fn is_agent_admin(agent_address: &Address) -> ZomeApiResult<bool> {
     let progenitor_address = progenitor::get_progenitor_address()?;
 

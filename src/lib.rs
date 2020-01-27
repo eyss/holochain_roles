@@ -35,6 +35,10 @@ impl Role {
     }
 }
 
+/**
+ * Role entry definition
+ * This function must be called from the zome entry point for this mixin to be setup properly
+ */
 pub fn role_entry_def() -> ValidatingEntryType {
     entry!(
         name: ROLE_TYPE,
