@@ -68,7 +68,7 @@ mod my_zome {
     }
 
     #[zome_fn("hc_public")]
-    fn get_agent_roles() -> ZomeApiResult<Vec<Role>> {
-        hc_roles_mixin::handlers::get_all_roles()
+    fn get_agent_roles(agent_address: Address) -> ZomeApiResult<Vec<Role>> {
+        hc_roles_mixin::handlers::get_agent_roles(&agent_address)
     }
 }
