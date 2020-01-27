@@ -7,6 +7,9 @@ description = "A crate to help hApps add roles to their DNA using the progenitor
 repository = "https://github.com/eyss/hc_roles_mixin"
 documentation = "https://docs.rs/hc_roles_mixin"
 license-file = "LICENSE"
+exclude = [
+    "example-dna/*",
+]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -19,3 +22,4 @@ hdk_proc_macros = "=0.0.42-alpha3"
 holochain_wasm_utils = "=0.0.42-alpha3"
 holochain_json_derive = "=0.0.17"
 holochain_anchors = "=0.2.1"
+
