@@ -25,7 +25,7 @@ impl Role {
     }
 
     pub fn entry(&self) -> Entry {
-        Entry::App("role".into(), self.into())
+        Entry::App(ROLE_TYPE.into(), self.into())
     }
 
     pub fn address(&self) -> ZomeApiResult<Address> {
@@ -38,7 +38,7 @@ impl Role {
 pub fn role_entry_def() -> ValidatingEntryType {
     entry!(
         name: ROLE_TYPE,
-        description: "role for ",
+        description: "role entry that contains a role name and the members of that role",
         sharing: Sharing::Public,
         validation_package: || {
             hdk::ValidationPackageDefinition::Entry
