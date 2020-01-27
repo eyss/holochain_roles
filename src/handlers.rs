@@ -81,9 +81,9 @@ pub fn get_role(role_name: &String) -> ZomeApiResult<Role> {
 /**
  * Returns all the roles that the given agent has been assigned to
  */
-pub fn get_agent_roles(agent_address: Address) -> ZomeApiResult<Vec<Role>> {
+pub fn get_agent_roles(agent_address: &Address) -> ZomeApiResult<Vec<Role>> {
     hdk::utils::get_links_and_load_type(
-        &agent_address,
+        agent_address,
         LinkMatch::Exactly(AGENT_TO_ROLE_LINK_TYPE),
         LinkMatch::Any,
     )
