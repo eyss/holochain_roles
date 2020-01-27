@@ -15,16 +15,14 @@ use hdk::holochain_persistence_api::cas::content::Address;
 use hc_roles_mixin;
 use hdk_proc_macros::zome;
 
-pub mod roles;
-
-use roles::Role;
+use hc_roles_mixin::Role;
 
 #[zome]
 mod my_zome {
 
     #[init]
     fn init() {
-        roles::handlers::create_admin_role()?;
+        hc_roles_mixin::handlers::create_admin_role()?;
 
         Ok(())
     }
