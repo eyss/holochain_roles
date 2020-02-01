@@ -47,6 +47,8 @@ pub fn assign_role(role_name: &String, agent_address: &Address) -> ZomeApiResult
 
     hdk::update_entry(current_role.entry(), &current_role.address()?)?;
 
+    hdk::link_entries(&agent_address, &current_role.address()?, AGENT_TO_ROLE_LINK_TYPE, "")?;
+
     Ok(())
 }
 
@@ -60,6 +62,8 @@ pub fn unassign_role(role_name: &String, agent_address: &Address) -> ZomeApiResu
     current_role.members.remove_item(&agent_address);
 
     hdk::update_entry(current_role.entry(), &current_role.address()?)?;
+
+    hdk::remove_link(&agent_address, &current_role.address()?, AGENT_TO_ROLE_LINK_TYPE, "")?;
 
     Ok(())
 }
