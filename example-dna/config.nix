@@ -21,7 +21,7 @@
    #       the sha here changes (the sha is the cache key for downloads)
    # note: to get a new sha, get nix to try and download a bad sha
    #       it will complain and tell you the right sha
-   sha256 = "1swzx6jv99bx5dr4b4y9rs65xv07c2k7xf48smrk4x0b7lflw1b5";
+   sha256 = "1al3in1p5g6prll6fbbhrz6aydj8nm9z0di88hjwvinkj872v3vh";
 
 
    # the github owner of the holonix repo
