@@ -1,17 +1,20 @@
+use crate::ADMIN_ROLE_NAME;
+use crate::RoleAssignment;
+use crate::progenitor;
 use hdk::prelude::*;
-use crate::*;
 
 /**
  * Returns whether the given agent has been assigned to the given role
  */
 pub fn has_agent_role(agent_address: &Address, role_name: &String) -> ZomeApiResult<bool> {
-    let role = Role::from(role_name.clone(), vec![]);
+    let role = RoleAssignment::from(role_name.clone(), agent_address.clone());
 
     let role_address = role.address()?;
 
-    let current_role: Role = hdk::utils::get_as_type(role_address.clone())?;
-
-    Ok(current_role.members.contains(&agent_address))
+    match hdk::get_entry(&role_address)? {
+        Some(_) => Ok(true),
+        None => Ok(false),
+    }
 }
 
 /**

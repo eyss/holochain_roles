@@ -1,4 +1,4 @@
-# hc_roles_mixin
+# holochain_roles
 
 Generic holochain mixin to include administrator and dynamic roles in any holochain application, using the progenitor pattern.
 

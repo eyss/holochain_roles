@@ -4,73 +4,61 @@ use hdk::prelude::*;
 use holochain_anchors;
 use serde_derive::{Deserialize, Serialize};
 
+pub mod handlers;
 pub mod progenitor;
 pub mod validation;
-pub mod handlers;
 
-pub const ROLE_TYPE: &'static str = "role";
-pub const AGENT_TO_ROLE_LINK_TYPE: &'static str = "agent->role";
-pub const ANCHOR_TO_ROLE_LINK_TYPE: &'static str = "anchor->role";
+pub const ROLE_ASSIGNMENT_TYPE: &'static str = "role_assignment";
+pub const AGENT_TO_ASSIGNMENT_LINK_TYPE: &'static str = "agent->role_assignment";
+pub const ROLE_TO_ASSIGNMENT_LINK_TYPE: &'static str = "role->role_assignment";
 pub const ADMIN_ROLE_NAME: &'static str = "Admin";
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
-pub struct Role {
+pub struct RoleAssignment {
     pub role_name: String,
-    pub members: Vec<Address>,
+    pub agent_address: Address,
 }
 
-impl Role {
-    pub fn from(role_name: String, members: Vec<Address>) -> Role {
-        Role { role_name, members }
+impl RoleAssignment {
+    pub fn from(role_name: String, agent_address: Address) -> RoleAssignment {
+        RoleAssignment {
+            role_name,
+            agent_address,
+        }
     }
 
     pub fn entry(&self) -> Entry {
-        Entry::App(ROLE_TYPE.into(), self.into())
+        Entry::App(ROLE_ASSIGNMENT_TYPE.into(), self.into())
     }
 
     pub fn address(&self) -> ZomeApiResult<Address> {
-        let initial_role_entry = Role::from(self.role_name.clone(), vec![]);
+        let initial_role_entry =
+            RoleAssignment::from(self.role_name.clone(), self.agent_address.clone());
 
         hdk::entry_address(&initial_role_entry.entry())
     }
 }
 
 /**
- * Role entry definition
+ * Role assignment entry definition
  * This function must be called from the zome entry point for this mixin to be setup properly
  */
-pub fn role_entry_def() -> ValidatingEntryType {
+pub fn role_assignment_entry_def() -> ValidatingEntryType {
     entry!(
-        name: ROLE_TYPE,
-        description: "role entry that contains a role name and the members of that role",
+        name: ROLE_ASSIGNMENT_TYPE,
+        description: "role assignment entry that contains a role name and the members of that role",
         sharing: Sharing::Public,
         validation_package: || {
             hdk::ValidationPackageDefinition::Entry
         },
-        validation: | _validation_data: hdk::EntryValidationData<Role>| {
+        validation: | _validation_data: hdk::EntryValidationData<RoleAssignment>| {
             match _validation_data {
-                hdk::EntryValidationData::Create { entry, validation_data } => {
-                    if entry.members.len() != 0 {
-                        return Err(String::from("The first role entry cannot have any members"));
-                    }
-
-                    if entry.role_name == String::from(ADMIN_ROLE_NAME) {
-                        return Ok(());
-                    }
-
+                hdk::EntryValidationData::Create { validation_data, .. } => {
                     let agent_address = &validation_data.sources()[0];
 
                     match validation::is_agent_admin(&agent_address)? {
                         true => Ok(()),
                         false => Err(String::from("Only admins can create roles"))
-                    }
-                },
-                hdk::EntryValidationData::Modify { validation_data, .. } => {
-                    let agent_address = &validation_data.sources()[0];
-
-                    match validation::is_agent_admin(&agent_address)? {
-                        true => Ok(()),
-                        false => Err(String::from("Only admins can assign roles"))
                     }
                 },
                 _ => Err(String::from("Cannot delete roles"))
@@ -79,26 +67,47 @@ pub fn role_entry_def() -> ValidatingEntryType {
         links: [
             from!(
                 "%agent_id",
-                link_type: AGENT_TO_ROLE_LINK_TYPE,
+                link_type: AGENT_TO_ASSIGNMENT_LINK_TYPE,
 
                 validation_package: || {
                     hdk::ValidationPackageDefinition::Entry
                 },
-
                 validation: |_validation_data: hdk::LinkValidationData| {
-                    Ok(())
+                    let agent_address = match _validation_data {
+                        hdk::LinkValidationData::LinkAdd { validation_data, .. } => {
+                            validation_data.sources()[0].clone()
+                        },
+                        hdk::LinkValidationData::LinkRemove { validation_data, .. } => {
+                            validation_data.sources()[0].clone()
+                        },
+                    };
+                    match validation::is_agent_admin(&agent_address)? {
+                        true => Ok(()),
+                        false => Err(String::from("Only admins can create roles"))
+                    }
                 }
             ),
             from!(
                 holochain_anchors::ANCHOR_TYPE,
-                link_type: ANCHOR_TO_ROLE_LINK_TYPE,
+                link_type: ROLE_TO_ASSIGNMENT_LINK_TYPE,
 
                 validation_package: || {
                     hdk::ValidationPackageDefinition::Entry
                 },
 
                 validation: |_validation_data: hdk::LinkValidationData| {
-                    Ok(())
+                    let agent_address = match _validation_data {
+                        hdk::LinkValidationData::LinkAdd { validation_data, .. } => {
+                            validation_data.sources()[0].clone()
+                        },
+                        hdk::LinkValidationData::LinkRemove { validation_data, .. } => {
+                            validation_data.sources()[0].clone()
+                        },
+                    };
+                    match validation::is_agent_admin(&agent_address)? {
+                        true => Ok(()),
+                        false => Err(String::from("Only admins can create roles"))
+                    }
                 }
             )
         ]

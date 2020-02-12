@@ -1,53 +1,33 @@
+use crate::ROLE_TO_ASSIGNMENT_LINK_TYPE;
+use crate::AGENT_TO_ASSIGNMENT_LINK_TYPE;
 use hdk::prelude::*;
 
-use crate::{Role, ADMIN_ROLE_NAME, AGENT_TO_ROLE_LINK_TYPE, ANCHOR_TO_ROLE_LINK_TYPE};
-
-/**
- * Creates the administrator role in the hApp
- * This function should be called 
- * Anyone can create the administrator role
- */
-pub fn create_admin_role() -> ZomeApiResult<()> {
-    let admin_role = Role::from(String::from(ADMIN_ROLE_NAME), vec![]);
-
-    match hdk::get_entry(&admin_role.address()?)? {
-        Some(_) => Ok(()),
-        None => {
-            create_role(&String::from(ADMIN_ROLE_NAME))?;
-
-            Ok(())
-        }
-    }
-}
-
-/**
- * Creates the role with the given name
- * Only administrators can create roles
- */
-pub fn create_role(role_name: &String) -> ZomeApiResult<Address> {
-    let anchor_address = get_role_anchor()?;
-
-    let initial_role_entry = Role::from(role_name.clone(), vec![]);
-
-    let role_address = hdk::commit_entry(&initial_role_entry.entry())?;
-
-    hdk::link_entries(&anchor_address, &role_address, ANCHOR_TO_ROLE_LINK_TYPE, "")?;
-
-    Ok(role_address)
-}
+use crate::RoleAssignment;
 
 /**
  * Assigns the role with the given name to the given agent
  * Only administrators can assign roles
  */
 pub fn assign_role(role_name: &String, agent_address: &Address) -> ZomeApiResult<()> {
-    let mut current_role = get_role(&role_name)?;
+    let role_address = get_role_anchor_address(&role_name)?;
 
-    current_role.members.push(agent_address.clone());
+    let assignment = RoleAssignment::from(role_name.clone(), agent_address.clone());
 
-    hdk::update_entry(current_role.entry(), &current_role.address()?)?;
+    let assignment_address = hdk::commit_entry(&assignment.entry())?;
 
-    hdk::link_entries(&agent_address, &current_role.address()?, AGENT_TO_ROLE_LINK_TYPE, "")?;
+    hdk::link_entries(
+        &agent_address,
+        &assignment_address,
+        AGENT_TO_ASSIGNMENT_LINK_TYPE,
+        "",
+    )?;
+
+    hdk::link_entries(
+        &role_address,
+        &assignment_address,
+        ROLE_TO_ASSIGNMENT_LINK_TYPE,
+        "",
+    )?;
 
     Ok(())
 }
@@ -57,13 +37,24 @@ pub fn assign_role(role_name: &String, agent_address: &Address) -> ZomeApiResult
  * Only administrators can unassign roles
  */
 pub fn unassign_role(role_name: &String, agent_address: &Address) -> ZomeApiResult<()> {
-    let mut current_role = get_role(&role_name)?;
+    let role_anchor = get_role_anchor_address(&role_name)?;
 
-    current_role.members.remove_item(&agent_address);
+    let assignment = RoleAssignment::from(role_name.clone(), agent_address.clone());
+    let assignment_address = assignment.address()?;
 
-    hdk::update_entry(current_role.entry(), &current_role.address()?)?;
-
-    hdk::remove_link(&agent_address, &current_role.address()?, AGENT_TO_ROLE_LINK_TYPE, "")?;
+    hdk::remove_link(
+        &agent_address,
+        &assignment_address,
+        AGENT_TO_ASSIGNMENT_LINK_TYPE,
+        "",
+    )?;
+    hdk::remove_link(
+        &role_anchor,
+        &assignment_address,
+        ROLE_TO_ASSIGNMENT_LINK_TYPE,
+        "",
+    )?;
+    hdk::remove_entry(&assignment_address)?;
 
     Ok(())
 }
@@ -72,38 +63,63 @@ pub fn unassign_role(role_name: &String, agent_address: &Address) -> ZomeApiResu
  * Returns the current role entry for the role with the given name
  * This can be used to check all the current members that have been assigned to this role
  */
-pub fn get_role(role_name: &String) -> ZomeApiResult<Role> {
-    let role = Role::from(role_name.clone(), vec![]);
+pub fn get_role_anchor_address(role_name: &String) -> ZomeApiResult<Address> {
+    let role_anchor = holochain_anchors::create_anchor("role".into(), role_name.into())?;
 
-    let role_address = role.address()?;
+    let root_anchor = get_role_root_anchor()?;
 
-    let role_entry: Role = hdk::utils::get_as_type(role_address.clone())?;
-    Ok(role_entry)
+    hdk::link_entries(
+        &root_anchor,
+        &role_anchor,
+        holochain_anchors::ANCHOR_TYPE,
+        "",
+    )?;
+
+    Ok(role_anchor)
 }
-
 
 /**
  * Returns all the roles that the given agent has been assigned to
  */
-pub fn get_agent_roles(agent_address: &Address) -> ZomeApiResult<Vec<Role>> {
+pub fn get_agent_roles(agent_address: &Address) -> ZomeApiResult<Vec<RoleAssignment>> {
     hdk::utils::get_links_and_load_type(
         agent_address,
-        LinkMatch::Exactly(AGENT_TO_ROLE_LINK_TYPE),
+        LinkMatch::Exactly(AGENT_TO_ASSIGNMENT_LINK_TYPE),
         LinkMatch::Any,
     )
 }
 
 /**
- * Returns all the roles present in the application
+ * Returns all the roles that the given agent has been assigned to
  */
-pub fn get_all_roles() -> ZomeApiResult<Vec<Role>> {
-    hdk::utils::get_links_and_load_type(
-        &get_role_anchor()?,
-        LinkMatch::Exactly(ANCHOR_TO_ROLE_LINK_TYPE),
+pub fn get_role_agents(role_name: &String) -> ZomeApiResult<Vec<Address>> {
+    let role_address = get_role_anchor_address(&role_name)?;
+
+    let assignment: Vec<RoleAssignment> = hdk::utils::get_links_and_load_type(
+        &role_address,
+        LinkMatch::Exactly(AGENT_TO_ASSIGNMENT_LINK_TYPE),
         LinkMatch::Any,
-    )
+    )?;
+
+    Ok(assignment
+        .iter()
+        .map(|assignment| assignment.agent_address.clone())
+        .collect())
 }
 
-fn get_role_anchor() -> ZomeApiResult<Address> {
+/**
+* Returns all the roles present in the application
+pub fn get_all_roles() -> ZomeApiResult<Vec<String>> {
+    let roles = hdk::utils::get_links_and_load_type(
+        &get_role_root_anchor()?,
+        LinkMatch::Exactly(holochain_anchors::ANCHOR_TYPE),
+        LinkMatch::Any,
+       )?;
+
+       roles.iter().map(|role| role.)
+   }
+   */
+
+fn get_role_root_anchor() -> ZomeApiResult<Address> {
     holochain_anchors::create_anchor("roles".into(), "all_roles".into())
 }
