@@ -30,7 +30,7 @@ mod my_zome {
 
     #[entry_def]
     fn role_entry_def() -> ValidatingEntryType {
-        holochain_roles::role_entry_def()
+        holochain_roles::role_assignment_entry_def()
     }
 
     #[entry_def]
@@ -49,12 +49,12 @@ mod my_zome {
     }
 
     #[zome_fn("hc_public")]
-    fn get_role_agents(role_name: String) -> ZomeApiResult<Role> {
+    fn get_role_agents(role_name: String) -> ZomeApiResult<Vec<Address>> {
         holochain_roles::handlers::get_role_agents(&role_name)
     }
 
     #[zome_fn("hc_public")]
     fn get_agent_roles(agent_address: Address) -> ZomeApiResult<Vec<String>> {
-        hc_roles_mixin::handlers::get_agent_roles(&agent_address)
+        holochain_roles::handlers::get_agent_roles(&agent_address)
     }
 }
