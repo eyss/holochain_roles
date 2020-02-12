@@ -1,5 +1,5 @@
-use crate::ROLE_TO_ASSIGNMENT_LINK_TYPE;
 use crate::AGENT_TO_ASSIGNMENT_LINK_TYPE;
+use crate::ROLE_TO_ASSIGNMENT_LINK_TYPE;
 use hdk::prelude::*;
 
 use crate::RoleAssignment;
@@ -62,12 +62,14 @@ pub fn unassign_role(role_name: &String, agent_address: &Address) -> ZomeApiResu
 /**
  * Returns all the roles that the given agent has been assigned to
  */
-pub fn get_agent_roles(agent_address: &Address) -> ZomeApiResult<Vec<RoleAssignment>> {
-    hdk::utils::get_links_and_load_type(
+pub fn get_agent_roles(agent_address: &Address) -> ZomeApiResult<Vec<String>> {
+    let assignments: Vec<RoleAssignment> = hdk::utils::get_links_and_load_type(
         agent_address,
         LinkMatch::Exactly(AGENT_TO_ASSIGNMENT_LINK_TYPE),
         LinkMatch::Any,
-    )
+    )?;
+
+    Ok(assignments.iter().map(|a| a.role_name.clone()).collect())
 }
 
 /**
@@ -104,7 +106,6 @@ pub fn get_all_roles() -> ZomeApiResult<Vec<String>> {
 fn get_role_root_anchor() -> ZomeApiResult<Address> {
     holochain_anchors::create_anchor("roles".into(), "all_roles".into())
 }
-
 
 /**
  * Returns the role anchor address for the role with the given name
