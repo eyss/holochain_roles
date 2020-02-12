@@ -60,25 +60,6 @@ pub fn unassign_role(role_name: &String, agent_address: &Address) -> ZomeApiResu
 }
 
 /**
- * Returns the current role entry for the role with the given name
- * This can be used to check all the current members that have been assigned to this role
- */
-pub fn get_role_anchor_address(role_name: &String) -> ZomeApiResult<Address> {
-    let role_anchor = holochain_anchors::create_anchor("role".into(), role_name.into())?;
-
-    let root_anchor = get_role_root_anchor()?;
-
-    hdk::link_entries(
-        &root_anchor,
-        &role_anchor,
-        holochain_anchors::ANCHOR_TYPE,
-        "",
-    )?;
-
-    Ok(role_anchor)
-}
-
-/**
  * Returns all the roles that the given agent has been assigned to
  */
 pub fn get_agent_roles(agent_address: &Address) -> ZomeApiResult<Vec<RoleAssignment>> {
@@ -122,4 +103,23 @@ pub fn get_all_roles() -> ZomeApiResult<Vec<String>> {
 
 fn get_role_root_anchor() -> ZomeApiResult<Address> {
     holochain_anchors::create_anchor("roles".into(), "all_roles".into())
+}
+
+
+/**
+ * Returns the role anchor address for the role with the given name
+ */
+fn get_role_anchor_address(role_name: &String) -> ZomeApiResult<Address> {
+    let role_anchor = holochain_anchors::create_anchor("role".into(), role_name.into())?;
+
+    let root_anchor = get_role_root_anchor()?;
+
+    hdk::link_entries(
+        &root_anchor,
+        &role_anchor,
+        holochain_anchors::ANCHOR_TYPE,
+        "",
+    )?;
+
+    Ok(role_anchor)
 }

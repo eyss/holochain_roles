@@ -20,7 +20,7 @@ Add the following to your zomes cargo toml.
 
 ```
 holochain_anchors = "0.2.1"
-hc_roles_mixin = "0.1.3"
+holochain_roles = "0.1.0"
 ```
 
 ## Usage
@@ -41,31 +41,7 @@ Add the roles entry definition to your zome.
 ```rust
  #[entry_def]
 fn roles_def() -> ValidatingEntryType {
-    hc_roles_mixin::role_entry_def()
-}
-```
-
-In your `init` function, create the `Admin` role:
-
-```rust
-#[init]
-fn init() {
-    hc_roles_mixin::handlers::create_admin_role()?;
-    Ok(())
-}
-```
-
-### Create a role
-
-To create a role, simply call the `create_role` function:
-
-```rust
-#[zome_fn("hc_public")]
-fn some_public_function() {
-    let my_role_name = String::from("editor");
-
-    hc_roles_mixin::handlers::create_role(&my_role_name)?;
-    ...
+    holochain_roles::role_entry_def()
 }
 ```
 
@@ -77,6 +53,21 @@ To assign a role, simply call the `assign_role` function:
 #[zome_fn("hc_public")]
 fn some_other_public_function(agent_address: Address) {
     let my_role_name = String::from("editor");
+
+    hc_roles_mixin::handlers::assign_role(&my_role_name, &agent_address)?;
+    ...
+}
+```
+
+### Assign an administrator
+
+Only agents that have the administrator role or the progenitor of the DNA can assign or unassign roles.
+To assign an administrator role, call the `assign_role` function with the imported administrator role name:
+
+```rust
+#[zome_fn("hc_public")]
+fn some_other_public_function(agent_address: Address) {
+    let my_role_name = String::from(holochain_roles::ADMIN_ROLE_NAME);
 
     hc_roles_mixin::handlers::assign_role(&my_role_name, &agent_address)?;
     ...
@@ -98,8 +89,53 @@ validation: | _validation_data: hdk::EntryValidationData<MyEntry>| {
                 return Err(String::from("Only editors can create a new entry"));
             }
             ...
-            
 
+        }
+    }
+}
+```
+
+### Get all role assignments for an agent
+
+To get all role assignments for a certain agent, you can use the validation `get_agent_roles` function:
+
+```rust
+#[zome_fn("hc_public")]
+fn some_public_function(agent_address: Address) {
+    let roles: Vec<String> = hc_roles_mixin::handlers::get_agent_roles(&agent_address)?;
+}
+```
+
+### Get all agents that have a certain role assigned
+
+To get all role assignments for a certain agent, you can use the validation `get_role_agents` function:
+
+```rust
+#[zome_fn("hc_public")]
+fn some_public_function(role_name: String) {
+    let agents: Vec<Address> = hc_roles_mixin::handlers::get_role_agents(&role_name)?;
+}
+```
+
+### Check if user has a certain role
+
+To check if a user has a certain role, you can use the validation `has_agent_role` function:
+
+```rust
+validation: | _validation_data: hdk::EntryValidationData<MyEntry>| {
+    match _validation_data {
+        hdk::EntryValidationData::Create { entry, validation_data } => {
+            let agent_address = &validation_data.sources()[0];
+            let is_agent_permitted_to_create_this_entry = hc_roles_mixin::validaton::has_agent_role(&agent_address, String::from("editor"))?;
+
+            if !is_agent_permitted_to_create_this_entry {
+                return Err(String::from("Only editors can create a new entry"));
+            }
+            ...
+
+        }
+    }
+}
 ```
 
 ### Unassign a role
