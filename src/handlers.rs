@@ -120,12 +120,7 @@ fn get_role_anchor_address(role_name: &String) -> ZomeApiResult<Address> {
 
     let root_anchor = get_role_root_anchor()?;
 
-    hdk::link_entries(
-        &root_anchor,
-        &role_anchor,
-        holochain_anchors::ANCHOR_TYPE,
-        "",
-    )?;
+    hdk::link_entries(&root_anchor, &role_anchor, crate::ANCHOR_LINK_TYPE, "")?;
 
     Ok(role_anchor)
 }

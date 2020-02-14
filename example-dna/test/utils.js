@@ -17,7 +17,7 @@ const getAllRoles = caller => () =>
   caller.call("rolesTest", "example", "get_all_roles", {});
 
 const getRole = caller => roleName =>
-  caller.call("rolesTest", "example", "get_role", { role_name: roleName });
+  caller.call("rolesTest", "example", "get_role_agents", { role_name: roleName });
 
 const getAgentRoles = caller => agentAddress =>
   caller.call("rolesTest", "example", "get_agent_roles", {

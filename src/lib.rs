@@ -12,6 +12,7 @@ pub const ROLE_ASSIGNMENT_TYPE: &'static str = "role_assignment";
 pub const AGENT_TO_ASSIGNMENT_LINK_TYPE: &'static str = "agent->role_assignment";
 pub const ROLE_TO_ASSIGNMENT_LINK_TYPE: &'static str = "role->role_assignment";
 pub const ADMIN_ROLE_NAME: &'static str = "Admin";
+pub const ANCHOR_LINK_TYPE: &'static str = concat!("holochain_anchors", "::", "anchor_link");
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct RoleAssignment {

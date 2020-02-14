@@ -5,6 +5,33 @@ use hdk::holochain_core_types::{crud_status::CrudStatus, time::Iso8601};
 use hdk::prelude::*;
 
 /**
+ * Validates that the agent that have signed this entry had the given role at the time they commited the entry
+ */
+pub fn validate_required_role(
+    validation_data: &hdk::ValidationData,
+    role_name: &String,
+) -> ZomeApiResult<()> {
+    let agent_address = &validation_data.sources()[0];
+
+    let progenitor_address = progenitor::get_progenitor_address()?;
+
+    if progenitor_address == agent_address.clone() {
+        return Ok(());
+    }
+
+    let timestamp = &validation_data.package.chain_header.timestamp();
+    let entry_address = &validation_data.package.chain_header.entry_address();
+
+    match had_agent_role(&agent_address, &role_name, &timestamp)? {
+        true => Ok(()),
+        false => Err(ZomeApiError::from(format!(
+            "Agent {} did not have the role {} when committing entry {}",
+            agent_address, role_name, entry_address
+        ))),
+    }
+}
+
+/**
  * Returns whether the given agent had been assigned to a certain role in the given time
  */
 pub fn had_agent_role(
