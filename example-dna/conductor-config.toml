@@ -19,7 +19,7 @@ public_address = 'HcSCIp94gUSFR3p3urhjCwXZsjqmrauxpGy43XhEeH344uwoqiMWanHdmme3tk
 
 [[dnas]]
 file = './dist/example-dna.dna.json'
-hash = 'QmPEmon5V3rhvgXYw9woSdm4MPAcGjSe4yUKGRVxZXyiP1'
+hash = 'QmVWPFFuKw2puGp7P8Mgj3JQDRG5pgqB7ptHo4aY6R6ear'
 id = 'hc-roles'
 
 [[instances]]

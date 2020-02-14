@@ -20,7 +20,7 @@ Add the following to your zomes cargo toml.
 
 ```
 holochain_anchors = "0.2.1"
-holochain_roles = "0.1.2"
+holochain_roles = "0.1.4"
 ```
 
 ## Usage
@@ -97,7 +97,23 @@ validation: | _validation_data: hdk::EntryValidationData<MyEntry>| {
 
 ### Check if user had a certain role in a certain moment in time
 
-To check if a user has a certain role, you can use the validation `has_agent_role` function:
+To check if a user has a certain role, you have two options:
+
+- Use the validation `validate_required_role` function, which will return and error in case the user did not have the given role at the time they committed the entry:
+
+```rust
+validation: | _validation_data: hdk::EntryValidationData<MyEntry>| {
+    match _validation_data {
+        hdk::EntryValidationData::Create { validation_data } => {
+            holochain_roles::validaton::validate_require_role(&validation_data, String::from("editor"))?;
+
+            ...
+        }
+    }
+}
+```
+
+- Use the validation `has_agent_role` function:
 
 ```rust
 validation: | _validation_data: hdk::EntryValidationData<MyEntry>| {
