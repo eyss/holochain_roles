@@ -4,8 +4,6 @@ Generic holochain mixin to include administrator and dynamic roles in any holoch
 
 This mixin is built to target `hc v0.0.42-alpha3`. It also depends on the [holochain_anchors](https://github.com/holochain/holochain_anchors) to be present and configured.
 
-> Known issue: due to [updated entries not being propagated](https://github.com/holochain/holochain-rust/issues/2008), this mixin won't actually work in a real environtment, since it depends on an update on the role entry to be propagated througout the network.
-
 ## Design
 
 Here is the design for this mixin: https://hackmd.io/6xfwfSVYSGeZe3vQ_-1cWw?view.
