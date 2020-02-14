@@ -41,7 +41,7 @@ Add the roles entry definition to your zome.
 ```rust
  #[entry_def]
 fn roles_def() -> ValidatingEntryType {
-    holochain_roles::role_entry_def()
+    holochain_roles::role_assignment_entry_def()
 }
 ```
 
