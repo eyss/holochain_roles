@@ -61,7 +61,15 @@ pub fn role_assignment_entry_def() -> ValidatingEntryType {
                         false => Err(String::from("Only admins can create roles"))
                     }
                 },
-                _ => Err(String::from("Cannot delete roles"))
+                hdk::EntryValidationData::Delete { validation_data, .. } => {
+                    let agent_address = &validation_data.sources()[0];
+
+                    match validation::is_agent_admin(&agent_address)? {
+                        true => Ok(()),
+                        false => Err(String::from("Only admins can create roles"))
+                    }
+                },
+                _ => Err(String::from("Cannot modify roles"))
             }
         },
         links: [

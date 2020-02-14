@@ -2,7 +2,7 @@
 
 Generic holochain mixin to include administrator and dynamic roles in any holochain application, using the progenitor pattern.
 
-This mixin is built to target `hc v0.0.43-alpha3`. It also depends on the [holochain_anchors](https://github.com/holochain/holochain_anchors) to be present and configured.
+This mixin is built to target `hc v0.0.42-alpha3`. It also depends on the [holochain_anchors](https://github.com/holochain/holochain_anchors) to be present and configured.
 
 > Known issue: due to [updated entries not being propagated](https://github.com/holochain/holochain-rust/issues/2008), this mixin won't actually work in a real environtment, since it depends on an update on the role entry to be propagated througout the network.
 
@@ -12,7 +12,7 @@ Here is the design for this mixin: https://hackmd.io/6xfwfSVYSGeZe3vQ_-1cWw?view
 
 ## Documentation
 
-Here you can find the documentation for this mixin: https://docs.rs/hc_roles_mixin.
+Here you can find the documentation for this mixin: https://docs.rs/holochain_roles.
 
 ## Installation
 
@@ -20,7 +20,7 @@ Add the following to your zomes cargo toml.
 
 ```
 holochain_anchors = "0.2.1"
-holochain_roles = "0.1.0"
+holochain_roles = "0.1.2"
 ```
 
 ## Usage
@@ -54,7 +54,7 @@ To assign a role, simply call the `assign_role` function:
 fn some_other_public_function(agent_address: Address) {
     let my_role_name = String::from("editor");
 
-    hc_roles_mixin::handlers::assign_role(&my_role_name, &agent_address)?;
+    holochain_roles::handlers::assign_role(&my_role_name, &agent_address)?;
     ...
 }
 ```
@@ -69,12 +69,12 @@ To assign an administrator role, call the `assign_role` function with the import
 fn some_other_public_function(agent_address: Address) {
     let my_role_name = String::from(holochain_roles::ADMIN_ROLE_NAME);
 
-    hc_roles_mixin::handlers::assign_role(&my_role_name, &agent_address)?;
+    holochain_roles::handlers::assign_role(&my_role_name, &agent_address)?;
     ...
 }
 ```
 
-### Check if user has a certain role
+### Check if user currently has a certain role
 
 To check if a user has a certain role, you can use the validation `has_agent_role` function:
 
@@ -83,7 +83,29 @@ validation: | _validation_data: hdk::EntryValidationData<MyEntry>| {
     match _validation_data {
         hdk::EntryValidationData::Create { entry, validation_data } => {
             let agent_address = &validation_data.sources()[0];
-            let is_agent_permitted_to_create_this_entry = hc_roles_mixin::validaton::has_agent_role(&agent_address, String::from("editor"))?;
+            let is_agent_permitted_to_create_this_entry = holochain_roles::validaton::has_agent_role(&agent_address, String::from("editor"))?;
+
+            if !is_agent_permitted_to_create_this_entry {
+                return Err(String::from("Only editors can create a new entry"));
+            }
+            ...
+
+        }
+    }
+}
+```
+
+### Check if user had a certain role in a certain moment in time
+
+To check if a user has a certain role, you can use the validation `has_agent_role` function:
+
+```rust
+validation: | _validation_data: hdk::EntryValidationData<MyEntry>| {
+    match _validation_data {
+        hdk::EntryValidationData::Create { entry, validation_data } => {
+            let agent_address = &validation_data.sources()[0];
+            let timestamp = &validation_data.package.chain_header.timestamp();
+            let is_agent_permitted_to_create_this_entry = holochain_roles::validaton::had_agent_role(&agent_address, String::from("editor"), timestamp)?;
 
             if !is_agent_permitted_to_create_this_entry {
                 return Err(String::from("Only editors can create a new entry"));
@@ -102,7 +124,7 @@ To get all role assignments for a certain agent, you can use the validation `get
 ```rust
 #[zome_fn("hc_public")]
 fn some_public_function(agent_address: Address) {
-    let roles: Vec<String> = hc_roles_mixin::handlers::get_agent_roles(&agent_address)?;
+    let roles: Vec<String> = holochain_roles::handlers::get_agent_roles(&agent_address)?;
 }
 ```
 
@@ -113,28 +135,7 @@ To get all role assignments for a certain agent, you can use the validation `get
 ```rust
 #[zome_fn("hc_public")]
 fn some_public_function(role_name: String) {
-    let agents: Vec<Address> = hc_roles_mixin::handlers::get_role_agents(&role_name)?;
-}
-```
-
-### Check if user has a certain role
-
-To check if a user has a certain role, you can use the validation `has_agent_role` function:
-
-```rust
-validation: | _validation_data: hdk::EntryValidationData<MyEntry>| {
-    match _validation_data {
-        hdk::EntryValidationData::Create { entry, validation_data } => {
-            let agent_address = &validation_data.sources()[0];
-            let is_agent_permitted_to_create_this_entry = hc_roles_mixin::validaton::has_agent_role(&agent_address, String::from("editor"))?;
-
-            if !is_agent_permitted_to_create_this_entry {
-                return Err(String::from("Only editors can create a new entry"));
-            }
-            ...
-
-        }
-    }
+    let agents: Vec<Address> = holochain_roles::handlers::get_role_agents(&role_name)?;
 }
 ```
 
@@ -147,7 +148,7 @@ To unassign a role, simply call the `unassign_role` function:
 fn some_other_public_function(agent_address: Address) {
     let my_role_name = String::from("editor");
 
-    hc_roles_mixin::handlers::unassign_role(&my_role_name, &agent_address)?;
+    holochain_roles::handlers::unassign_role(&my_role_name, &agent_address)?;
     ...
 }
 ```

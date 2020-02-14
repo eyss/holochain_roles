@@ -1,8 +1,7 @@
-use crate::AGENT_TO_ASSIGNMENT_LINK_TYPE;
-use crate::ROLE_TO_ASSIGNMENT_LINK_TYPE;
+use crate::{
+    progenitor, RoleAssignment, AGENT_TO_ASSIGNMENT_LINK_TYPE, ROLE_TO_ASSIGNMENT_LINK_TYPE,
+};
 use hdk::prelude::*;
-
-use crate::RoleAssignment;
 
 /**
  * Assigns the role with the given name to the given agent
@@ -69,7 +68,13 @@ pub fn get_agent_roles(agent_address: &Address) -> ZomeApiResult<Vec<String>> {
         LinkMatch::Any,
     )?;
 
-    Ok(assignments.iter().map(|a| a.role_name.clone()).collect())
+    let mut role_names: Vec<String> = assignments.iter().map(|a| a.role_name.clone()).collect();
+
+    if progenitor::get_progenitor_address()? == agent_address.clone() {
+        role_names.push(String::from(crate::ADMIN_ROLE_NAME));
+    }
+
+    Ok(role_names)
 }
 
 /**
