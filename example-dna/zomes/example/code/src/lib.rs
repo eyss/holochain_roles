@@ -49,6 +49,7 @@ mod my_zome {
             }
         )
     }
+    
     #[zome_fn("hc_public")]
     fn create_test_entry(test: String) -> ZomeApiResult<Address> {
         let entry = Entry::App("test".into(), JsonString::from_json(test.as_str()));
