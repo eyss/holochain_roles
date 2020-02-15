@@ -55,22 +55,12 @@ pub fn role_assignment_entry_def() -> ValidatingEntryType {
         validation: | _validation_data: hdk::EntryValidationData<RoleAssignment>| {
             match _validation_data {
                 hdk::EntryValidationData::Create { validation_data, .. } => {
-                    let agent_address = &validation_data.sources()[0];
-
-                    match validation::is_agent_admin(&agent_address)? {
-                        true => Ok(()),
-                        false => Err(String::from("Only admins can create roles"))
-                    }
+                    validation::validate_required_role(&validation_data, &String::from(ADMIN_ROLE_NAME))
                 },
                 hdk::EntryValidationData::Delete { validation_data, .. } => {
-                    let agent_address = &validation_data.sources()[0];
-
-                    match validation::is_agent_admin(&agent_address)? {
-                        true => Ok(()),
-                        false => Err(String::from("Only admins can create roles"))
-                    }
+                    validation::validate_required_role(&validation_data, &String::from(ADMIN_ROLE_NAME))
                 },
-                _ => Err(String::from("Cannot modify roles"))
+                _ => Err(String::from("Cannot modify role assignments"))
             }
         },
         links: [
@@ -82,17 +72,13 @@ pub fn role_assignment_entry_def() -> ValidatingEntryType {
                     hdk::ValidationPackageDefinition::Entry
                 },
                 validation: |_validation_data: hdk::LinkValidationData| {
-                    let agent_address = match _validation_data {
+                    match _validation_data {
                         hdk::LinkValidationData::LinkAdd { validation_data, .. } => {
-                            validation_data.sources()[0].clone()
+                            validation::validate_required_role(&validation_data, &String::from(ADMIN_ROLE_NAME))
                         },
                         hdk::LinkValidationData::LinkRemove { validation_data, .. } => {
-                            validation_data.sources()[0].clone()
+                            validation::validate_required_role(&validation_data, &String::from(ADMIN_ROLE_NAME))
                         },
-                    };
-                    match validation::is_agent_admin(&agent_address)? {
-                        true => Ok(()),
-                        false => Err(String::from("Only admins can create roles"))
                     }
                 }
             ),
@@ -105,17 +91,13 @@ pub fn role_assignment_entry_def() -> ValidatingEntryType {
                 },
 
                 validation: |_validation_data: hdk::LinkValidationData| {
-                    let agent_address = match _validation_data {
+                    match _validation_data {
                         hdk::LinkValidationData::LinkAdd { validation_data, .. } => {
-                            validation_data.sources()[0].clone()
+                            validation::validate_required_role(&validation_data, &String::from(ADMIN_ROLE_NAME))
                         },
                         hdk::LinkValidationData::LinkRemove { validation_data, .. } => {
-                            validation_data.sources()[0].clone()
+                            validation::validate_required_role(&validation_data, &String::from(ADMIN_ROLE_NAME))
                         },
-                    };
-                    match validation::is_agent_admin(&agent_address)? {
-                        true => Ok(()),
-                        false => Err(String::from("Only admins can create roles"))
                     }
                 }
             )
