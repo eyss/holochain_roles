@@ -1,9 +1,10 @@
-use holochain_wasm_utils::api_serialization::get_entry::GetEntryResultItem;
 use crate::progenitor;
 use crate::RoleAssignment;
 use crate::ADMIN_ROLE_NAME;
-use hdk::holochain_core_types::{crud_status::CrudStatus, time::Iso8601};
+use hdk::holochain_core_types::time::Iso8601;
 use hdk::prelude::*;
+use holochain_wasm_utils::api_serialization::get_entry::GetEntryResultItem;
+use std::convert::TryFrom;
 
 /**
  * Validates that the agent that have signed this entry had the given role at the time they commited the entry
@@ -32,7 +33,6 @@ pub fn validate_required_role(
     }
 }
 
-
 /**
  * Returns whether the given agent had been assigned to a certain role in the given time
  */
@@ -41,9 +41,9 @@ pub fn had_agent_role(
     role_name: &String,
     timestamp: &Iso8601,
 ) -> ZomeApiResult<bool> {
-    let role = RoleAssignment::from(role_name.clone(), agent_address.clone());
+    let role = RoleAssignment::initial(role_name.clone(), agent_address.clone());
 
-    let role_address = role.address()?;
+    let role_address = role.initial_address()?;
     match get_entry_history_with_meta(&role_address)? {
         None => Ok(false),
         Some(history) => {
@@ -58,28 +58,25 @@ pub fn had_agent_role(
             });
 
             match maybe_item_index {
-                None => Ok(is_item_alive(history.items.last())),
+                None => is_agent_assigned(history.items.last()),
                 Some(item_index) => {
                     let item = history.items.get(item_index - 1);
-                    Ok(is_item_alive(item))
+                    is_agent_assigned(item)
                 }
             }
         }
     }
 }
 
-fn is_item_alive(maybe_item: Option<&GetEntryResultItem>) -> bool {
+fn is_agent_assigned(maybe_item: Option<&GetEntryResultItem>) -> ZomeApiResult<bool> {
     if let Some(item) = maybe_item {
-        let result = match item.meta.clone().unwrap().crud_status {
-            CrudStatus::Deleted => false,
-            CrudStatus::Rejected => false,
-            CrudStatus::Locked => false,
-            _ => true,
-        };
-        return result;
+        if let Some(Entry::App(_, entry_content)) = item.clone().entry {
+            let role_assignment = RoleAssignment::try_from(entry_content)?;
+            return Ok(role_assignment.assigned);
+        }
     }
 
-    return false;
+    return Ok(false);
 }
 
 fn get_entry_history_with_meta(address: &Address) -> ZomeApiResult<Option<EntryHistory>> {
@@ -100,13 +97,16 @@ fn get_entry_history_with_meta(address: &Address) -> ZomeApiResult<Option<EntryH
  * Returns whether the given agent has been assigned to the given role
  */
 pub fn has_agent_role(agent_address: &Address, role_name: &String) -> ZomeApiResult<bool> {
-    let role = RoleAssignment::from(role_name.clone(), agent_address.clone());
+    let role = RoleAssignment::initial(role_name.clone(), agent_address.clone());
 
-    let role_address = role.address()?;
+    let role_address = role.initial_address()?;
 
     match hdk::get_entry(&role_address)? {
-        Some(_) => Ok(true),
-        None => Ok(false),
+        Some(Entry::App(_, entry_content)) => {
+            let role_assignment = RoleAssignment::try_from(entry_content)?;
+            Ok(role_assignment.assigned)
+        }
+        _ => Ok(false),
     }
 }
 

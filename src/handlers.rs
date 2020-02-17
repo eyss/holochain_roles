@@ -1,3 +1,4 @@
+use crate::ROLE_ASSIGNMENT_TYPE;
 use crate::{
     progenitor, RoleAssignment, AGENT_TO_ASSIGNMENT_LINK_TYPE, ROLE_TO_ASSIGNMENT_LINK_TYPE,
 };
@@ -8,27 +9,7 @@ use hdk::prelude::*;
  * Only administrators can assign roles
  */
 pub fn assign_role(role_name: &String, agent_address: &Address) -> ZomeApiResult<()> {
-    let role_address = get_role_anchor_address(&role_name)?;
-
-    let assignment = RoleAssignment::from(role_name.clone(), agent_address.clone());
-
-    let assignment_address = hdk::commit_entry(&assignment.entry())?;
-
-    hdk::link_entries(
-        &agent_address,
-        &assignment_address,
-        AGENT_TO_ASSIGNMENT_LINK_TYPE,
-        "",
-    )?;
-
-    hdk::link_entries(
-        &role_address,
-        &assignment_address,
-        ROLE_TO_ASSIGNMENT_LINK_TYPE,
-        "",
-    )?;
-
-    Ok(())
+    update_assignment_entry(&role_name, &agent_address, true)
 }
 
 /**
@@ -36,24 +17,71 @@ pub fn assign_role(role_name: &String, agent_address: &Address) -> ZomeApiResult
  * Only administrators can unassign roles
  */
 pub fn unassign_role(role_name: &String, agent_address: &Address) -> ZomeApiResult<()> {
-    let role_anchor = get_role_anchor_address(&role_name)?;
+    update_assignment_entry(&role_name, &agent_address, false)
+}
 
-    let assignment = RoleAssignment::from(role_name.clone(), agent_address.clone());
-    let assignment_address = assignment.address()?;
+fn update_assignment_entry(
+    role_name: &String,
+    agent_address: &Address,
+    assigned: bool,
+) -> ZomeApiResult<()> {
+    let role_address = get_role_anchor_address(&role_name)?;
 
-    hdk::remove_link(
+    let links_result = hdk::get_links(
+        &role_address,
+        LinkMatch::Exactly(ROLE_ASSIGNMENT_TYPE),
+        LinkMatch::Exactly(String::from(agent_address.clone()).as_str()),
+    )?;
+
+    let maybe_previous_address: Option<Address> =
+        links_result.addresses().get(0).map(|a| a.clone());
+
+    let new_assignment_address: Address = {
+        if let Some(previous_address) = maybe_previous_address {
+            let mut previous_assignment: RoleAssignment =
+                hdk::utils::get_as_type(previous_address.clone())?;
+
+            // If assigned has not changed, we don't have to do anything, return
+            if previous_assignment.assigned == assigned {
+                return Ok(());
+            } else {
+                previous_assignment.previous_assignment_address = Some(previous_address.clone());
+                previous_assignment.assigned = assigned;
+
+                hdk::remove_link(
+                    &agent_address,
+                    &previous_address,
+                    AGENT_TO_ASSIGNMENT_LINK_TYPE,
+                    role_name.as_str(),
+                )?;
+                hdk::remove_link(
+                    &role_address,
+                    &previous_address,
+                    ROLE_TO_ASSIGNMENT_LINK_TYPE,
+                    String::from(agent_address.clone()).as_str(),
+                )?;
+
+                hdk::update_entry(previous_assignment.entry(), &previous_address)?
+            }
+        } else {
+            let initial_assignment =
+                RoleAssignment::initial(role_name.clone(), agent_address.clone());
+            hdk::commit_entry(&initial_assignment.entry())?
+        }
+    };
+
+    hdk::link_entries(
         &agent_address,
-        &assignment_address,
+        &new_assignment_address,
         AGENT_TO_ASSIGNMENT_LINK_TYPE,
-        "",
+        role_name.as_str(),
     )?;
-    hdk::remove_link(
-        &role_anchor,
-        &assignment_address,
+    hdk::link_entries(
+        &role_address,
+        &new_assignment_address,
         ROLE_TO_ASSIGNMENT_LINK_TYPE,
-        "",
+        String::from(agent_address.clone()).as_str(),
     )?;
-    hdk::remove_entry(&assignment_address)?;
 
     Ok(())
 }

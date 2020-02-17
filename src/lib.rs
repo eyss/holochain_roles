@@ -18,13 +18,17 @@ pub const ANCHOR_LINK_TYPE: &'static str = concat!("holochain_anchors", "::", "a
 pub struct RoleAssignment {
     pub role_name: String,
     pub agent_address: Address,
+    pub previous_assignment_address: Option<Address>,
+    pub assigned: bool,
 }
 
 impl RoleAssignment {
-    pub fn from(role_name: String, agent_address: Address) -> RoleAssignment {
+    pub fn initial(role_name: String, agent_address: Address) -> RoleAssignment {
         RoleAssignment {
             role_name,
             agent_address,
+            previous_assignment_address: None,
+            assigned: true,
         }
     }
 
@@ -32,9 +36,9 @@ impl RoleAssignment {
         Entry::App(ROLE_ASSIGNMENT_TYPE.into(), self.into())
     }
 
-    pub fn address(&self) -> ZomeApiResult<Address> {
+    pub fn initial_address(&self) -> ZomeApiResult<Address> {
         let initial_role_entry =
-            RoleAssignment::from(self.role_name.clone(), self.agent_address.clone());
+            RoleAssignment::initial(self.role_name.clone(), self.agent_address.clone());
 
         hdk::entry_address(&initial_role_entry.entry())
     }
@@ -54,13 +58,19 @@ pub fn role_assignment_entry_def() -> ValidatingEntryType {
         },
         validation: | _validation_data: hdk::EntryValidationData<RoleAssignment>| {
             match _validation_data {
-                hdk::EntryValidationData::Create { validation_data, .. } => {
+                hdk::EntryValidationData::Create { validation_data, entry } => {
+                    if let Some(_) = entry.previous_assignment_address {
+                        return Err(String::from("Cannot create a role with a previous entry address"));
+                    }
+
+                    validation::validate_required_role(&validation_data, &String::from(ADMIN_ROLE_NAME))
+                },
+                hdk::EntryValidationData::Modify { validation_data, .. } => {
                     validation::validate_required_role(&validation_data, &String::from(ADMIN_ROLE_NAME))
                 },
                 hdk::EntryValidationData::Delete { validation_data, .. } => {
                     validation::validate_required_role(&validation_data, &String::from(ADMIN_ROLE_NAME))
                 },
-                _ => Err(String::from("Cannot modify role assignments"))
             }
         },
         links: [
