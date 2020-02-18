@@ -1,4 +1,3 @@
-use crate::ROLE_ASSIGNMENT_TYPE;
 use crate::{
     progenitor, RoleAssignment, AGENT_TO_ASSIGNMENT_LINK_TYPE, ROLE_TO_ASSIGNMENT_LINK_TYPE,
 };
@@ -28,9 +27,9 @@ fn update_assignment_entry(
     let role_address = get_role_anchor_address(&role_name)?;
 
     let links_result = hdk::get_links(
-        &role_address,
-        LinkMatch::Exactly(ROLE_ASSIGNMENT_TYPE),
-        LinkMatch::Exactly(String::from(agent_address.clone()).as_str()),
+        &agent_address,
+        LinkMatch::Exactly(AGENT_TO_ASSIGNMENT_LINK_TYPE),
+        LinkMatch::Exactly(String::from(role_name.clone()).as_str()),
     )?;
 
     let maybe_previous_address: Option<Address> =
@@ -47,7 +46,7 @@ fn update_assignment_entry(
             } else {
                 previous_assignment.previous_assignment_address = Some(previous_address.clone());
                 previous_assignment.assigned = assigned;
-
+                /*
                 hdk::remove_link(
                     &agent_address,
                     &previous_address,
@@ -60,9 +59,11 @@ fn update_assignment_entry(
                     ROLE_TO_ASSIGNMENT_LINK_TYPE,
                     String::from(agent_address.clone()).as_str(),
                 )?;
-
+                 */
                 hdk::update_entry(previous_assignment.entry(), &previous_address)?
             }
+        } else if !assigned {
+            return Ok(());
         } else {
             let initial_assignment =
                 RoleAssignment::initial(role_name.clone(), agent_address.clone());

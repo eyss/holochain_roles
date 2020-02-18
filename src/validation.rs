@@ -1,7 +1,8 @@
 use crate::progenitor;
 use crate::RoleAssignment;
 use crate::ADMIN_ROLE_NAME;
-use hdk::holochain_core_types::time::Iso8601;
+use crate::AGENT_TO_ASSIGNMENT_LINK_TYPE;
+use hdk::holochain_core_types::time::{Iso8601, Timeout};
 use hdk::prelude::*;
 use holochain_wasm_utils::api_serialization::get_entry::GetEntryResultItem;
 use std::convert::TryFrom;
@@ -41,29 +42,44 @@ pub fn had_agent_role(
     role_name: &String,
     timestamp: &Iso8601,
 ) -> ZomeApiResult<bool> {
-    let role = RoleAssignment::initial(role_name.clone(), agent_address.clone());
+    let result_history = hdk::get_links_result(
+        &agent_address,
+        LinkMatch::Exactly(AGENT_TO_ASSIGNMENT_LINK_TYPE),
+        LinkMatch::Exactly(role_name),
+        GetLinksOptions::default(),
+        GetEntryOptions::new(StatusRequestKind::Initial, true, true, Timeout::default()),
+    )?;
 
-    let role_address = role.initial_address()?;
-    match get_entry_history_with_meta(&role_address)? {
-        None => Ok(false),
-        Some(history) => {
-            let maybe_item_index = history.items.iter().position(|item| {
-                let timestamps: Vec<&Iso8601> = item
-                    .headers
-                    .iter()
-                    .map(|header| header.timestamp())
-                    .collect();
+    let history: Vec<GetEntryResultItem> = result_history
+        .into_iter()
+        .filter_map(|item| match item {
+            Ok(i) => match i.result {
+                GetEntryResultType::Single(result) => Some(result),
+                _ => None,
+            },
+            _ => None,
+        })
+        .collect();
 
-                timestamps.iter().min().unwrap().clone() > timestamp
-            });
+    let maybe_item_index = history.iter().position(|item| {
+        let timestamps: Vec<&Iso8601> = item
+            .headers
+            .iter()
+            .map(|header| header.timestamp())
+            .collect();
 
-            match maybe_item_index {
-                None => is_agent_assigned(history.items.last()),
-                Some(item_index) => {
-                    let item = history.items.get(item_index - 1);
-                    is_agent_assigned(item)
-                }
-            }
+        let min = timestamps.iter().min();
+        match min {
+            Some(m) => m.clone() > timestamp,
+            None => false,
+        }
+    });
+
+    match maybe_item_index {
+        None => is_agent_assigned(history.last()),
+        Some(item_index) => {
+            let item = history.get(item_index - 1);
+            is_agent_assigned(item)
         }
     }
 }
@@ -77,20 +93,6 @@ fn is_agent_assigned(maybe_item: Option<&GetEntryResultItem>) -> ZomeApiResult<b
     }
 
     return Ok(false);
-}
-
-fn get_entry_history_with_meta(address: &Address) -> ZomeApiResult<Option<EntryHistory>> {
-    let entry_result = hdk::get_entry_result(
-        address,
-        GetEntryOptions::new(StatusRequestKind::All, true, true, Default::default()),
-    )?;
-    if !entry_result.found() {
-        return Ok(None);
-    }
-    match entry_result.result {
-        GetEntryResultType::All(history) => Ok(Some(history)),
-        _ => Err(ZomeApiError::from("shouldn't happen".to_string())),
-    }
 }
 
 /**
