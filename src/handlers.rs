@@ -46,7 +46,8 @@ fn update_assignment_entry(
             } else {
                 previous_assignment.previous_assignment_address = Some(previous_address.clone());
                 previous_assignment.assigned = assigned;
-                /*
+                
+                // TODO: comment this when update_entry works
                 hdk::remove_link(
                     &agent_address,
                     &previous_address,
@@ -59,8 +60,9 @@ fn update_assignment_entry(
                     ROLE_TO_ASSIGNMENT_LINK_TYPE,
                     String::from(agent_address.clone()).as_str(),
                 )?;
-                 */
-                hdk::update_entry(previous_assignment.entry(), &previous_address)?
+                 
+                // TODO: uncomment this when update_entry works hdk::update_entry(previous_assignment.entry(), &previous_address)?
+                hdk::commit_entry(&previous_assignment.entry())?
             }
         } else if !assigned {
             return Ok(());
@@ -97,7 +99,13 @@ pub fn get_agent_roles(agent_address: &Address) -> ZomeApiResult<Vec<String>> {
         LinkMatch::Any,
     )?;
 
-    let mut role_names: Vec<String> = assignments.iter().map(|a| a.role_name.clone()).collect();
+    let mut role_names: Vec<String> = assignments
+        .iter()
+        .filter_map(|a| match a.assigned {
+            true => Some(a.role_name.clone()),
+            false => None,
+        })
+        .collect();
 
     if progenitor::get_progenitor_address()? == agent_address.clone() {
         role_names.push(String::from(crate::ADMIN_ROLE_NAME));
@@ -120,7 +128,10 @@ pub fn get_role_agents(role_name: &String) -> ZomeApiResult<Vec<Address>> {
 
     Ok(assignment
         .iter()
-        .map(|assignment| assignment.agent_address.clone())
+        .filter_map(|assignment| match assignment.assigned {
+            true => Some(assignment.agent_address.clone()),
+            false => None,
+        })
         .collect())
 }
 

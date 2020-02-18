@@ -60,7 +60,7 @@ pub fn role_assignment_entry_def() -> ValidatingEntryType {
             match _validation_data {
                 hdk::EntryValidationData::Create { validation_data, entry } => {
                     if let Some(_) = entry.previous_assignment_address {
-                        return Err(String::from("Cannot create a role with a previous entry address"));
+                        // TODO: Uncomment this when update_entry works return Err(String::from("Cannot create a role with a previous entry address"));
                     }
 
                     validation::validate_required_role(&validation_data, &String::from(ADMIN_ROLE_NAME))
