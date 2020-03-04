@@ -149,14 +149,14 @@ pub fn get_all_roles() -> ZomeApiResult<Vec<String>> {
    */
 
 fn get_role_root_anchor() -> ZomeApiResult<Address> {
-    holochain_anchors::create_anchor("roles".into(), "all_roles".into())
+    holochain_anchors::anchor("roles".into(), "all_roles".into())
 }
 
 /**
  * Returns the role anchor address for the role with the given name
  */
 fn get_role_anchor_address(role_name: &String) -> ZomeApiResult<Address> {
-    let role_anchor = holochain_anchors::create_anchor("role".into(), role_name.into())?;
+    let role_anchor = holochain_anchors::anchor("role".into(), role_name.into())?;
 
     let root_anchor = get_role_root_anchor()?;
 
