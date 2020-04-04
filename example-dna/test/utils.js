@@ -1,27 +1,31 @@
-const createRole = caller => roleName =>
-  caller.call("rolesTest", "example", "create_role", { role_name: roleName });
+const createEntry = (caller) => (content = "sample content") =>
+  caller.call("rolesTest", "example", "create_my_entry", {
+    entry: { content },
+  });
 
-const assignRole = caller => (roleName, agentAddress) =>
+const assignRole = (caller) => (agentAddress, roleName) =>
   caller.call("rolesTest", "example", "assign_role", {
     role_name: roleName,
-    agent_address: agentAddress
+    agent_address: agentAddress,
   });
 
-const unassignRole = caller => (roleName, agentAddress) =>
+const unassignRole = (caller) => (agentAddress, roleName) =>
   caller.call("rolesTest", "example", "create_role", {
     role_name: roleName,
-    agent_address: agentAddress
+    agent_address: agentAddress,
   });
 
-const getAllRoles = caller => () =>
+const getAllRoles = (caller) => () =>
   caller.call("rolesTest", "example", "get_all_roles", {});
 
-const getRole = caller => roleName =>
-  caller.call("rolesTest", "example", "get_role_agents", { role_name: roleName });
+const getAgentsWithRole = (caller) => (roleName) =>
+  caller.call("rolesTest", "example", "get_role_agents", {
+    role_name: roleName,
+  });
 
-const getAgentRoles = caller => agentAddress =>
+const getAgentRoles = (caller) => (agentAddress) =>
   caller.call("rolesTest", "example", "get_agent_roles", {
-    agent_address: agentAddress
+    agent_address: agentAddress,
   });
 
 module.exports = {
@@ -30,5 +34,6 @@ module.exports = {
   unassignRole,
   getAgentRoles,
   getRole,
-  getAllRoles
+  getAllRoles,
+  createEntry,
 };

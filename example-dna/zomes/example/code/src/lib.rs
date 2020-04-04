@@ -40,7 +40,7 @@ mod my_zome {
             validation: | _validation_data: hdk::EntryValidationData<String>| {
                 match _validation_data {
                     hdk::EntryValidationData::Create { validation_data, .. } => {
-                        holochain_roles::validation::validate_required_role(&validation_data, &String::from(holochain_roles::ADMIN_ROLE_NAME))?;
+                        holochain_roles::validation::validate_required_role(&validation_data, &String::from("editor"))?;
 
                         Ok(())
                     },

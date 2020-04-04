@@ -10,10 +10,10 @@ const {
   combine,
   singleConductor,
   localOnly,
-  tapeExecutor
+  tapeExecutor,
 } = require("@holochain/tryorama");
 
-process.on("unhandledRejection", error => {
+process.on("unhandledRejection", (error) => {
   // Will print "unhandledRejection err is not defined"
   console.error("got unhandledRejection:", error);
 });
@@ -35,44 +35,89 @@ const orchestrator = new Orchestrator({
     // Remove this middleware for other "real" network types which can actually
     // send messages across conductors
     singleConductor
-  )
+  ),
 });
 
-const dna = Config.dna(dnaPath, "scaffold-test");
+const dna = Config.dna(dnaPath, "rolesTest");
 const conductorConfig = Config.gen({ rolesTest: dna });
 
 const {
   assignRole,
-  createRole,
   getAgentRoles,
   getAllRoles,
-  getRole,
-  unassignRole
+  getAgentsWithRole,
+  createEntry,
+  unassignRole,
 } = require("./utils");
 
-orchestrator.registerScenario("description of example test", async (s, t) => {
+orchestrator.registerScenario(
+  "only progenitor can assign roles",
+  async (s, t) => {
+    const { alice, bob } = await s.players(
+      { alice: conductorConfig, bob: conductorConfig },
+      true
+    );
+    const aliceAddress = alice.instance("rolesTest").agentAddress;
+    const bobAddress = bob.instance("rolesTest").agentAddress;
+
+    let result = await assignRole(bob)(aliceAddress, "editor");
+    t.notOk(result.Ok);
+
+    result = await assignRole(alice)(bobAddress, "editor");
+    t.ok(result.Ok);
+    await s.consistency();
+
+    result = await getAgentRoles(bob)(bobAddress);
+    t.equal(result.Ok[0], "editor");
+
+    result = await getAgentsWithRole(bob)("editor");
+    t.equal(result.Ok[0], bobAddress);
+
+    result = await getAllRoles(bob)();
+    t.equal(result.Ok[0], "editor");
+  }
+);
+
+orchestrator.registerScenario("progenitor can create entries", async (s, t) => {
   const { alice, bob } = await s.players(
     { alice: conductorConfig, bob: conductorConfig },
     true
   );
 
-  // Make a call to a Zome function
-  // indicating the function, and passing it an input
-  const addr = await alice.call("rolesTest", "my_zome", "create_my_entry", {
-    entry: { content: "sample content" }
-  });
+  let result = await createEntry(alice)();
 
-  // Wait for all network activity to settle
   await s.consistency();
 
-  const result = await bob.call("myInstanceName", "my_zome", "get_my_entry", {
-    address: addr.Ok
-  });
-
-  // check for equality of the actual and expected results
-  t.deepEqual(result, {
-    Ok: { App: ["my_entry", '{"content":"sample content"}'] }
-  });
+  t.ok(result.Ok);
 });
+
+orchestrator.registerScenario(
+  "non progenitors can only create entries when given permission",
+  async (s, t) => {
+    const { alice, bob } = await s.players(
+      { alice: conductorConfig, bob: conductorConfig },
+      true
+    );
+    const aliceAddress = alice.instance("rolesTest").agentAddress;
+    const bobAddress = alice.instance("rolesTest").agentAddress;
+
+    let result = await createEntry(bob)();
+    t.notOk(result.Ok);
+
+    result = await assignRole(alice)(bobAddress, "editor");
+    t.ok(result.Ok);
+    await s.consistency();
+
+    result = await createEntry(bob)();
+    t.ok(result.Ok);
+
+    result = await unassignRole(alice)(bobAddress, "editor");
+    t.ok(result.Ok);
+    await s.consistency();
+
+    result = await createEntry(bob)();
+    t.notOk(result.Ok);
+  }
+);
 
 orchestrator.run();

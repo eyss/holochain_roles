@@ -17,8 +17,8 @@ Here you can find the documentation for this mixin: https://docs.rs/holochain_ro
 Add the following to your zomes cargo toml.
 
 ```
-holochain_anchors = "0.2.1"
-holochain_roles = "0.1.7"
+holochain_anchors = "0.2.3"
+holochain_roles = "0.1.8"
 ```
 
 ## Usage
@@ -72,28 +72,9 @@ fn some_other_public_function(agent_address: Address) {
 }
 ```
 
-### Check if user currently has a certain role
-
-To check if a user has a certain role, you can use the validation `has_agent_role` function:
-
-```rust
-validation: | _validation_data: hdk::EntryValidationData<MyEntry>| {
-    match _validation_data {
-        hdk::EntryValidationData::Create { entry, validation_data } => {
-            let agent_address = &validation_data.sources()[0];
-            let is_agent_permitted_to_create_this_entry = holochain_roles::validaton::has_agent_role(&agent_address, String::from("editor"))?;
-
-            if !is_agent_permitted_to_create_this_entry {
-                return Err(String::from("Only editors can create a new entry"));
-            }
-            ...
-
-        }
-    }
-}
-```
-
 ### Check if user had a certain role in a certain moment in time
+
+**Only use these functions in a validation rule**
 
 To check if a user has a certain role, you have two options:
 
@@ -111,7 +92,7 @@ validation: | _validation_data: hdk::EntryValidationData<MyEntry>| {
 }
 ```
 
-- Use the validation `has_agent_role` function:
+- Use the validation `had_agent_role` function:
 
 ```rust
 validation: | _validation_data: hdk::EntryValidationData<MyEntry>| {
@@ -128,6 +109,19 @@ validation: | _validation_data: hdk::EntryValidationData<MyEntry>| {
 
         }
     }
+}
+```
+
+### Check if user currently has a certain role
+
+**This should not be used in a validation rule**
+
+To check if a user has a certain role, you can use the `has_agent_role` function:
+
+```rust
+#[zome_fn("hc_public")]
+fn some_public_function(agent_address: Address) {
+   let is_agent_permitted_to_create_this_entry = holochain_roles::validaton::has_agent_role(&agent_address, String::from("editor"))?;
 }
 ```
 
