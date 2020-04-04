@@ -138,12 +138,12 @@ fn some_public_function(agent_address: Address) {
 
 ### Get all agents that have a certain role assigned
 
-To get all role assignments for a certain agent, you can use the validation `get_role_agents` function:
+To get all role assignments for a certain agent, you can use the validation `get_agents_with_role` function:
 
 ```rust
 #[zome_fn("hc_public")]
 fn some_public_function(role_name: String) {
-    let agents: Vec<Address> = holochain_roles::handlers::get_role_agents(&role_name)?;
+    let agents: Vec<Address> = holochain_roles::handlers::get_agents_with_role(&role_name)?;
 }
 ```
 

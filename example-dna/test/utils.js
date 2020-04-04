@@ -1,5 +1,5 @@
 const createEntry = (caller) => (content = "sample content") =>
-  caller.call("rolesTest", "example", "create_my_entry", {
+  caller.call("rolesTest", "example", "create_test_entry", {
     entry: { content },
   });
 
@@ -19,7 +19,7 @@ const getAllRoles = (caller) => () =>
   caller.call("rolesTest", "example", "get_all_roles", {});
 
 const getAgentsWithRole = (caller) => (roleName) =>
-  caller.call("rolesTest", "example", "get_role_agents", {
+  caller.call("rolesTest", "example", "get_agents_with_role", {
     role_name: roleName,
   });
 
@@ -29,11 +29,10 @@ const getAgentRoles = (caller) => (agentAddress) =>
   });
 
 module.exports = {
-  createRole,
   assignRole,
   unassignRole,
   getAgentRoles,
-  getRole,
+  getAgentsWithRole,
   getAllRoles,
   createEntry,
 };

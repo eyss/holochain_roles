@@ -77,8 +77,8 @@ mod my_zome {
     }
 
     #[zome_fn("hc_public")]
-    fn get_role_agents(role_name: String) -> ZomeApiResult<Vec<Address>> {
-        holochain_roles::handlers::get_role_agents(&role_name)
+    fn get_agents_with_role(role_name: String) -> ZomeApiResult<Vec<Address>> {
+        holochain_roles::handlers::get_agents_with_role(&role_name)
     }
 
     #[zome_fn("hc_public")]

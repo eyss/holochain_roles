@@ -117,7 +117,7 @@ pub fn get_agent_roles(agent_address: &Address) -> ZomeApiResult<Vec<String>> {
 /**
  * Returns all the roles that the given agent has been assigned to
  */
-pub fn get_role_agents(role_name: &String) -> ZomeApiResult<Vec<Address>> {
+pub fn get_agents_with_role(role_name: &String) -> ZomeApiResult<Vec<Address>> {
     let role_address = get_role_anchor_address(&role_name)?;
 
     let assignment: Vec<RoleAssignment> = hdk::utils::get_links_and_load_type(

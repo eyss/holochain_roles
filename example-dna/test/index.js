@@ -78,21 +78,8 @@ orchestrator.registerScenario(
   }
 );
 
-orchestrator.registerScenario("progenitor can create entries", async (s, t) => {
-  const { alice, bob } = await s.players(
-    { alice: conductorConfig, bob: conductorConfig },
-    true
-  );
-
-  let result = await createEntry(alice)();
-
-  await s.consistency();
-
-  t.ok(result.Ok);
-});
-
 orchestrator.registerScenario(
-  "non progenitors can only create entries when given permission",
+  "agents can only create entries when given permission",
   async (s, t) => {
     const { alice, bob } = await s.players(
       { alice: conductorConfig, bob: conductorConfig },
@@ -101,7 +88,10 @@ orchestrator.registerScenario(
     const aliceAddress = alice.instance("rolesTest").agentAddress;
     const bobAddress = alice.instance("rolesTest").agentAddress;
 
-    let result = await createEntry(bob)();
+    let result = await createEntry(alice)();
+    t.notOk(result.Ok);
+
+    result = await createEntry(bob)();
     t.notOk(result.Ok);
 
     result = await assignRole(alice)(bobAddress, "editor");
