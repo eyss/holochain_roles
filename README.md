@@ -17,9 +17,11 @@ Here you can find the documentation for this mixin: https://docs.rs/holochain_ro
 Add the following to your zomes cargo toml.
 
 ```
-holochain_anchors = "0.2.3"
-holochain_roles = "0.1.8"
+holochain_anchors = { git = "https://github.com/holochain/holochain-anchors" }
+holochain_roles = { git = "https://github.com/eyss/holochain-roles" }
 ```
+
+> We can't publish to crates.io until the holochain_anchors dependency is also published.
 
 ## Usage
 
