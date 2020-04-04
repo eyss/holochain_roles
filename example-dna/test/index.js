@@ -38,8 +38,28 @@ const orchestrator = new Orchestrator({
   ),
 });
 
-const dna = Config.dna(dnaPath, "rolesTest");
-const conductorConfig = Config.gen({ rolesTest: dna });
+const dna = {
+  id: "rolesTests",
+  file: "./dist/example-dna.dna.json",
+};
+const aliceConfig = Config.gen({
+  agent: {
+    id: "alice",
+    public_address:
+      "HcScJWFagz6JtswwimIuXHa5V8h8Sjoy9Bkrbzfervjhuvq8g9whUEawSk845iz",
+    file: "./alice.keystore",
+  },
+  dna,
+});
+const bobConfig = Config.gen({
+  agent: {
+    id: "bob",
+    public_address:
+      "HcSCJR7dD9t6Nuqc9kxqWfKzbo443p8y8Z38IA9dukBEr96umt3b47uetMXg3aa",
+    file: "./bob.keystore",
+  },
+  dna,
+});
 
 const {
   assignRole,
@@ -54,7 +74,7 @@ orchestrator.registerScenario(
   "only progenitor can assign roles",
   async (s, t) => {
     const { alice, bob } = await s.players(
-      { alice: conductorConfig, bob: conductorConfig },
+      { alice: aliceConfig, bob: bobConfig },
       true
     );
     const aliceAddress = alice.instance("rolesTest").agentAddress;
@@ -82,7 +102,7 @@ orchestrator.registerScenario(
   "agents can only create entries when given permission",
   async (s, t) => {
     const { alice, bob } = await s.players(
-      { alice: conductorConfig, bob: conductorConfig },
+      { alice: aliceConfig, bob: bobConfig },
       true
     );
     const aliceAddress = alice.instance("rolesTest").agentAddress;
