@@ -1,6 +1,6 @@
 [package]
 name = "holochain_roles"
-version = "0.1.9"
+version = "0.1.10"
 authors = ["guillem <guillem.cordoba@gmail.com>"]
 edition = "2018"
 description = "A crate to help hApps add roles to their DNA using the progenitor pattern"
@@ -21,4 +21,4 @@ hdk = "=0.0.50-alpha4"
 hdk_proc_macros = "=0.0.50-alpha4"
 holochain_wasm_utils = "=0.0.50-alpha4"
 holochain_json_derive = "^0.0"
-holochain_anchors = { git = "https://github.com/holochain/holochain-anchors" }
+holochain_anchors = { git = "https://github.com/eyss/holochain-anchors" }
